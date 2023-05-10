@@ -53,10 +53,10 @@ public class InstitutionController {
             institution.setCode("bank-" + i);
             institution.setCreatedAt("2016-09-21T22:03:55+00:00");
             institution.setGuid(UUID.randomUUID().toString());
-            institution.setMediumLogoUrl("https://content.moneydesktop.com/storage/MD_Assets/Ipad%20Logos/100x100/INS-1572a04c-912b-59bf-5841-332c7dfafaef_100x100.png");
+            institution.setMediumLogoUrl("https://content.abccompany.com/storage/MD_Assets/Ipad%20Logos/100x100/INS-1572a04c-912b-59bf-5841-332c7dfafaef_100x100.png");
             institution.setName("Bank-" + i);
             institution.setPopularity(72664);
-            institution.setSmallLogoUrl("https://content.moneydesktop.com/storage/MD_Assets/Ipad%20Logos/50x50/INS-1572a04c-912b-59bf-5841-332c7dfafaef_50x50.png");
+            institution.setSmallLogoUrl("https://content.abccompany.com/storage/MD_Assets/Ipad%20Logos/50x50/INS-1572a04c-912b-59bf-5841-332c7dfafaef_50x50.png");
             institution.setSupportsAccountIdentification(true);
             institution.setSupportsAccountVerification(true);
             institution.setSupportsOauth(false);
