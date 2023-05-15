@@ -2,10 +2,14 @@ package com.example.rssfeed;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -21,6 +25,9 @@ public class InstitutionController {
 
     @Autowired
     private RedisTemplate<String, Institution> redisTemplate;
+
+    @Autowired
+    private VerificationRepository verificationRepository;
 
     private static final String INSTITUTIONS_CACHE_PREFIX = "institutions:";
 
@@ -73,8 +80,8 @@ public class InstitutionController {
     }
 
     @GetMapping("/institutions/typeahead")
-    public List<Institution> getInstitutionsBySearchQuery(@RequestParam String query) {
-        List<Institution> matchingInstitutions = getCachedInstitutionsByName(query);
+    public List<Institution> getInstitutionsBySearchQuery(@RequestParam String prefix) {
+        List<Institution> matchingInstitutions = getCachedInstitutionsByPrefix(prefix);
         return matchingInstitutions;
     }
     
@@ -88,6 +95,15 @@ public class InstitutionController {
         }
     }
 
+    private List<Institution> getCachedInstitutionsByPrefix(String prefix) {
+        Set<String> keys = redisTemplate.keys(INSTITUTIONS_CACHE_PREFIX + prefix.toLowerCase() + "*");
+        if (keys == null || keys.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Institution> institutions = redisTemplate.opsForValue().multiGet(keys);
+        return institutions;
+    }
+
     private List<Institution> getCachedInstitutionsByName(String name) {
         Set<String> keys = redisTemplate.keys(INSTITUTIONS_CACHE_PREFIX + name.toLowerCase() + "*");
         if (keys == null || keys.isEmpty()) {
@@ -96,7 +112,39 @@ public class InstitutionController {
         List<Institution> institutions = redisTemplate.opsForValue().multiGet(keys);
         return institutions;
     }
+
+
     
+    @PostMapping("/create-user-oauth-member-pending")
+    public ResponseEntity<String> createUserAndOauthMemberPending(@RequestBody Map<String, String> requestBody) {
+        String userId = requestBody.get("userId");
+        String fiGuid = requestBody.get("fiGuid");
+    
+        // Create a new verification object and set the initial state
+        Verification verification = new Verification();
+        verification.setUserId(userId);
+        verification.setVerificationState("USER_CREATED");
+    
+        // Save the new verification record with the USER_CREATED state
+        Verification savedVerification = verificationRepository.save(verification);
+    
+        // Update the verification record with the provided values
+        if (savedVerification != null) {
+            savedVerification.setFiGuid(fiGuid);
+            savedVerification.setVerificationMethod("OAUTH");
+            savedVerification.setMemberId("mbr-123");
+            savedVerification.setVerificationState("MEMBER_CREATION_PENDING");
+            savedVerification.setVerificationStatus("PENDING");
+            verificationRepository.save(savedVerification);
+            return ResponseEntity.ok("User created and verification updated successfully");
+        } else {
+            // Handle case where verification record for the user is not saved
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user and updating verification");
+        }
+    }
+    
+    
+
     
     
     
